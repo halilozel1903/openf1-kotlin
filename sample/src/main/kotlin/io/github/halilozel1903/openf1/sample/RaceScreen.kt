@@ -1,6 +1,7 @@
 package io.github.halilozel1903.openf1.sample
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -172,13 +173,16 @@ fun stopsLabel(stops: Int): String = if (stops == 1) "1 stop" else "$stops stops
 
 @Composable
 private fun TyreDots(tyres: List<TyreCompound>) {
+    // A hairline edge keeps the white hard compound visible on light surfaces.
+    val edge = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
     Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
         tyres.forEach { tyre ->
             Box(
                 Modifier
                     .size(14.dp)
                     .clip(RoundedCornerShape(7.dp))
-                    .background(tyre.color),
+                    .background(tyre.color)
+                    .border(0.75.dp, edge, RoundedCornerShape(7.dp)),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(tyre.letter, fontSize = 8.sp, fontWeight = FontWeight.Bold, color = contentColorOn(tyre.color))

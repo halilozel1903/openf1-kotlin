@@ -1,6 +1,7 @@
 package io.github.halilozel1903.openf1.sample
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -71,7 +72,8 @@ fun DriverDetail(race: RaceData, row: DriverRace, onBack: (() -> Unit)?, modifie
                             Modifier
                                 .size(12.dp)
                                 .clip(RoundedCornerShape(6.dp))
-                                .background(stint.tyre.color),
+                                .background(stint.tyre.color)
+                                .border(0.75.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f), RoundedCornerShape(6.dp)),
                         )
                         Spacer(Modifier.width(10.dp))
                         Text(

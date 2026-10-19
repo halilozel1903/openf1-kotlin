@@ -27,6 +27,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.TextStyle
@@ -172,6 +173,8 @@ fun StatTile(label: String, value: String, modifier: Modifier = Modifier, accent
 fun TyreStrip(stints: List<Stint>, totalLaps: Int, modifier: Modifier = Modifier, height: Dp = 16.dp) {
     val measurer = rememberTextMeasurer()
     val track = MaterialTheme.colorScheme.surfaceVariant
+    // A hairline edge keeps the white hard compound visible on light surfaces.
+    val edge = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
     Canvas(modifier.fillMaxWidth().height(height)) {
         val laps = totalLaps.coerceAtLeast(1).toFloat()
         val radius = CornerRadius(size.height / 2.5f)
@@ -185,6 +188,14 @@ fun TyreStrip(stints: List<Stint>, totalLaps: Int, modifier: Modifier = Modifier
             val width = (size.width * (end - start) / laps - gap).coerceAtLeast(1f)
             val fill = stint.tyre.color
             drawRoundRect(fill, topLeft = Offset(left, 0f), size = Size(width, size.height), cornerRadius = radius)
+            val hairline = 0.75.dp.toPx()
+            drawRoundRect(
+                edge,
+                topLeft = Offset(left + hairline / 2, hairline / 2),
+                size = Size(width - hairline, size.height - hairline),
+                cornerRadius = radius,
+                style = Stroke(hairline),
+            )
             val letter = measurer.measure(
                 stint.tyre.letter,
                 TextStyle(fontSize = (size.height * 0.62f).toSp(), fontWeight = FontWeight.Bold, color = contentColorOn(fill)),
@@ -203,9 +214,14 @@ fun TyreStrip(stints: List<Stint>, totalLaps: Int, modifier: Modifier = Modifier
 @Composable
 fun TyreLegend(compounds: List<TyreCompound>, modifier: Modifier = Modifier) {
     Row(modifier, horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
+        val edge = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
         compounds.forEach { compound ->
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                Canvas(Modifier.size(10.dp)) { drawCircle(compound.color) }
+                Canvas(Modifier.size(10.dp)) {
+                    drawCircle(compound.color)
+                    val hairline = 0.75.dp.toPx()
+                    drawCircle(edge, radius = size.minDimension / 2 - hairline / 2, style = Stroke(hairline))
+                }
                 Text(
                     compound.name,
                     style = MaterialTheme.typography.labelMedium,

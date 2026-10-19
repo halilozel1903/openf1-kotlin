@@ -5,6 +5,14 @@ PKG="${PKG:-$(grep -oE 'applicationId = "[^"]+"' sample/build.gradle.kts | cut -
 OUT="docs/screenshots"
 mkdir -p "$OUT"
 
+# Full Wi-Fi and no mobile signal in the demo status bar. Sent as separate commands, and again after a rotation,
+# because the tablet's System UI rebuilds its status bar and dropped the Wi-Fi icon otherwise.
+demo_network() {
+  adb shell am broadcast -a com.android.systemui.demo -e command network -e mobile hide > /dev/null
+  # "fully" must come with the Wi-Fi command, or the icon shows the no-internet mark.
+  adb shell am broadcast -a com.android.systemui.demo -e command network -e fully true -e wifi show -e level 4 > /dev/null
+}
+
 install_sample() {
   adb install -r sample/build/outputs/apk/debug/sample-debug.apk
   # A freshly booted emulator often shows "Pixel Launcher isn't responding".
@@ -18,7 +26,7 @@ install_sample() {
   adb shell am broadcast -a com.android.systemui.demo -e command enter
   adb shell am broadcast -a com.android.systemui.demo -e command clock -e hhmm 0941
   adb shell am broadcast -a com.android.systemui.demo -e command battery -e level 100 -e plugged false
-  adb shell am broadcast -a com.android.systemui.demo -e command network -e wifi show -e level 4 -e mobile show -e level 4
+  demo_network
   adb shell am broadcast -a com.android.systemui.demo -e command notifications -e visible false
 }
 
@@ -31,8 +39,22 @@ set_night_mode() {
 # image on screen have loaded, or "SCENE_FAILED <scene>: <reason>" when they show an error.
 SCENE_TAG="${SCENE_TAG:-RaceHubScene}"
 
+# The emulator runner unlocks the screen with a key press, which leaves the device out of touch mode, so
+# Compose would draw keyboard focus highlights. A tap on the empty home screen puts it back in touch mode.
+enter_touch_mode() {
+  local size w h
+  adb shell input keyevent KEYCODE_HOME
+  sleep 1
+  size="$(adb shell wm size | grep -oE '[0-9]+x[0-9]+' | tail -1 | tr -d '\r')"
+  w="${size%x*}"
+  h="${size#*x}"
+  adb shell input tap "$((w / 2))" "$((h * 2 / 5))"
+  sleep 1
+}
+
 fresh_launch() {
   adb shell pm clear "$PKG" > /dev/null
+  enter_touch_mode
   adb logcat -c || true
   adb shell am start -W -n "$PKG/.MainActivity" "$@" > /dev/null
 }
@@ -160,6 +182,8 @@ ensure_landscape() {
     h="${size#*x}"
     if [ "$w" -gt "$h" ]; then
       echo "Display is landscape ($size, rotation $rotation)"
+      demo_network
+      sleep 1
       return 0
     fi
   done
